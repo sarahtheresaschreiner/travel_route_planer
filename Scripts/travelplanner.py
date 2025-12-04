@@ -7,6 +7,7 @@ class Travelplanner:
     def __init__(self, distance_based=True, mode: int=0):
         self.distance_based = distance_based
         self.spots = []
+        self.adress = []
         self.start = None
         self.end = None
         self.geolocator = Nominatim(user_agent="my_geocoder")
@@ -17,23 +18,24 @@ class Travelplanner:
         self.profile = ["auto", "pedestrian", "bicycle"]
         self.g = None
     
-    def location(self, address: str):
+    def location(self, adress: str):
         sleep(1)
-        location = self.geolocator.geocode(address)
+        location = self.geolocator.geocode(adress)
         if location:
-            return [location.longitude, location.latitude]
+            return [location.latitude, location.longitude]
         else:
             raise Exception("No location found")
 
-    def change_spot(self, i, address):
+    def change_spot(self, i, adress: str):
         l = len(self.spots)
         if  l == 0 or l <= i:
             raise Exception("Index out of Bounds")
         else:
-            self.spots[i] = self.location(address)
+            self.spots[i] = self.location(adress)
     
-    def add_spot(self, address: str):
-        self.spots.append(self.location(address))
+    def add_spot(self, adress: str):
+        self.spots.append(self.location(adress))
+        self.adress.append(adress)
     
     def set_start(self, i):
         l = len(self.spots)
@@ -49,10 +51,19 @@ class Travelplanner:
         else:
             self.end = i
     
-    def calculate(self):
+    def calculate(self, plot=False):
         g = Graph(self.spots, self.distance_based, self.profile[self.mode])
-        print(g.to_string())
         shortest_path, length = g.shortest_path(self.start, self.end)
-        print('Best Path:')
-        g.printL(shortest_path)
-        print(length)
+        if plot:
+            print('Best Path:')
+            g.printL(shortest_path)
+            print(length)
+            self.print_order(shortest_path)
+        return shortest_path, length
+    
+    def print_order(self, path):
+        s='Recommended route\n'
+        for i in path:
+            s+=f"{self.adress[i]}: {self.spots[i]}\n"
+        print(s)
+        

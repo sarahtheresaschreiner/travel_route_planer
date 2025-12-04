@@ -1,14 +1,12 @@
 from json.encoder import INFINITY
-from sysconfig import get_path
-from node import Node
 from routingpy import Valhalla
 
 class Graph:
     def __init__(self, spots, distance_based, profile):
         self.profile = profile
-        self.nodes = spots                                  # list/dynamic array, accessing through index
+        self.vertices = spots                                  # list/dynamic array, accessing through index
         self.matrix = self.set_matrix(distance_based)
-    """ self.profile = 0
+    """ self.profile = 0                                    # testing values
         self.nodes = [(0,1),(1,2),(3,5)]
         self.matrix = [[0,1,30],
                        [40,0,1],
@@ -17,9 +15,7 @@ class Graph:
         
     def set_matrix(self, distance_based):
         client = Valhalla(base_url="https://valhalla1.openstreetmap.de")
-        matrix = client.matrix(locations=self.nodes, profile=self.profile)                      # [from][to] ([col][row], [x][y])
-        distance= client.directions(locations=self.nodes[:2], profile=self.profile).distance
-        print(distance)                                                                                       # print
+        matrix = client.matrix(locations=self.vertices, profile=self.profile)                      # [from][to] ([col][row], [x][y])
         if distance_based:
             return matrix.distances
         else:
@@ -27,7 +23,7 @@ class Graph:
         
     def to_string(self):                    # anders rum eigentlich, hier: row=from, col=to
         s = "Coords: \n"
-        for a, b in self.nodes:
+        for a, b in self.vertices:
             s+= f"[{a}, {b}], "
         s+="\n"
         for x in self.matrix:
@@ -39,10 +35,11 @@ class Graph:
 
     
     def shortest_path(self, start=None, end=None):            # giving the shortest of all posibile paths           # path: list, saving the indexes as int
-        aPath = [-1] * len(self.nodes)
-        marked = [False] * len(self.nodes)
+        l = len(self.vertices)
+        aPath = [-1] * l
+        marked = [False] * l
         if end is not None:
-            aPath[len(self.nodes)-1] = end
+            aPath[l-1] = end
             marked[end] = True
         if start is not None:
             aPath[0] = start
@@ -50,7 +47,7 @@ class Graph:
         else:
             bPath=None
             bLength = INFINITY
-            for i in range(len(self.nodes)):
+            for i in range(l):
                 if i != 0:
                     marked[i-1]= False
                 marked[i] = True
@@ -86,7 +83,7 @@ class Graph:
         return l
     
     def is_full_path(self, path):                                           # wenn weder der letzte noch der vorletzte -1 sind, ist keiner -1
-        last = len(self.nodes)-1
+        last = len(self.vertices)-1
         if path[last] == -1 or path[last-1] == -1:
             return False
         return True
@@ -111,11 +108,11 @@ class Graph:
         if self.no_more_paths(i):
             return bPath, bLength
         
-        if n >= len(self.nodes):
+        if n >= len(self.vertices):
             marked, path, n, i = self.go_back(marked, path, n, i)
         elif marked[n] is False:
             path, marked = self.add(path, marked, n, i)
-            i+= 1                                                                       # standard wert wenn man zum nächsten weiter geht
+            i+= 1                                                       # standard wert wenn man zum nächsten weiter geht
             n = 0
         else:
             n = self.go_next(n)
@@ -123,5 +120,12 @@ class Graph:
             i-=1
             bPath, bLength = self.save_path(bPath, bLength, path, i)
             marked, path, n, i = self.go_back(marked, path, n, i)
-        
         return self.path(bPath, bLength, path, marked, n, i)
+    
+    
+class Vertex:
+    next_id = 0
+    def __init__(self, data):
+        self.id = Vertex.next_id
+        Vertex.next_id += 1
+        self.data = data
