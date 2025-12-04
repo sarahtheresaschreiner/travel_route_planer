@@ -1,4 +1,3 @@
-from turtle import delay
 from graph import Graph
 from geopy.geocoders import Nominatim
 from time import sleep
@@ -59,6 +58,7 @@ class Travelplanner:
             g.printL(shortest_path)
             print(length)
             self.print_order(shortest_path)
+            self.plot_map(shortest_path)
         return shortest_path, length
     
     def print_order(self, path):
